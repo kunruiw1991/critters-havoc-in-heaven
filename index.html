@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Critters 连环画" />
+  <link rel="manifest" href="./manifest.json" />
+  <title>Smiling Critters: Havoc in Heaven (微笑萌兽大闹天宫 · 互动连环画)</title>
+  <style>
+    :root {
+      --crimson: #8b1e1e;
+      --crimson-dark: #4a0e0e;
+      --gold: #d4af37;
+      --gold-bright: #fde047;
+      --parchment: #fbf5e6;
+      --parchment-2: #f3e5c8;
+      --ink: #291811;
+      --ink-muted: #654321;
+      --purple: #6d28d9;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: "Georgia", "Songti SC", "SimSun", -apple-system, BlinkMacSystemFont, serif;
+      background: radial-gradient(circle at center, #5c1616 0%, #240707 100%);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px;
+      overflow-x: hidden;
+    }
+    /* Top Navigation & Controls Bar */
+    .top-bar {
+      width: 100%;
+      max-width: 1080px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px 16px;
+      background: rgba(42, 9, 9, 0.88);
+      border: 2px solid var(--gold);
+      border-radius: 14px;
+      color: var(--parchment);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .seal {
+      background: #b91c1c;
+      color: #fff;
+      border: 2px solid #fca5a5;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-weight: 900;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      box-shadow: inset 0 0 0 1px #991b1b;
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--gold-bright);
+    }
+    .brand-sub {
+      font-size: 0.78rem;
+      color: #fcd34d;
+      opacity: 0.9;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn {
+      background: linear-gradient(180deg, #fef08a 0%, #eab308 100%);
+      color: #3b0a0a;
+      border: 1.5px solid #fffbeb;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+      transition: transform 0.14s;
+    }
+    .btn:active, .btn:hover {
+      transform: scale(1.04);
+    }
+    .btn.secondary {
+      background: rgba(255,255,255,0.12);
+      color: #fef3c7;
+      border-color: var(--gold);
+    }
+    .btn.magic {
+      background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+      color: #fff;
+      border-color: #f5d0fe;
+    }
+
+    /* Classic Lianhuanhua Book Frame */
+    .book-stage {
+      width: 100%;
+      max-width: 1080px;
+      background: linear-gradient(135deg, var(--parchment) 0%, var(--parchment-2) 100%);
+      border: 6px double var(--crimson);
+      outline: 3px solid var(--gold);
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.65), inset 0 0 40px rgba(139, 30, 30, 0.12);
+      padding: 18px;
+      position: relative;
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+    @media (max-width: 860px) {
+      .book-stage {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left: Artwork Panel with Interactive Canvas Overlay */
+    .art-frame {
+      position: relative;
+      border: 4px solid var(--crimson);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #1a0909;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.28);
+      aspect-ratio: 4 / 3;
+      width: 100%;
+      user-select: none;
+    }
+    .art-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.35s ease;
+    }
+    .art-frame canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .tap-hint {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(20, 10, 35, 0.78);
+      color: #fde047;
+      border: 1px solid var(--gold);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.76rem;
+      font-family: -apple-system, sans-serif;
+      pointer-events: none;
+    }
+
+    /* Right: Story Scroll & Interactive Toy */
+    .story-pane {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 8px 6px;
+      border-left: 2px dashed rgba(139, 30, 30, 0.28);
+      padding-left: 18px;
+    }
+    @media (max-width: 860px) {
+      .story-pane {
+        border-left: none;
+        border-top: 2px dashed rgba(139, 30, 30, 0.28);
+        padding-left: 4px;
+        padding-top: 14px;
+      }
+    }
+    .chapter-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .chapter-pill {
+      background: var(--crimson);
+      color: var(--gold-bright);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      border: 1px solid var(--gold);
+    }
+    .cast-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .cast-tag {
+      font-family: -apple-system, sans-serif;
+      font-size: 0.72rem;
+      background: rgba(109, 40, 217, 0.12);
+      color: #5b21b6;
+      border: 1px solid rgba(109, 40, 217, 0.3);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .chapter-title-zh {
+      margin: 4px 0;
+      font-size: 1.35rem;
+      color: var(--crimson);
+      font-weight: 900;
+      line-height: 1.3;
+    }
+    .chapter-title-en {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: var(--ink);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .story-box {
+      background: rgba(255, 255, 255, 0.58);
+      border: 1.5px solid rgba(139, 30, 30, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .story-zh {
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: #1f1209;
+      margin: 0 0 8px;
+      font-weight: 600;
+    }
+    .story-pinyin {
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: #7c2d12;
+      margin: 0 0 8px;
+      font-family: -apple-system, sans-serif;
+      display: none;
+    }
+    .story-pinyin.visible {
+      display: block;
+    }
+    .story-en {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: #3b2314;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Interactive Toy Box */
+    .interactive-card {
+      background: linear-gradient(135deg, rgba(109,40,217,0.1), rgba(236,72,153,0.12));
+      border: 1.5px solid rgba(109,40,217,0.35);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-family: -apple-system, sans-serif;
+    }
+    .interactive-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #4c1d95;
+      margin-bottom: 6px;
+    }
+    .audio-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(139, 30, 30, 0.2);
+    }
+    .page-dots {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid var(--crimson);
+      background: #fff;
+      color: var(--crimson);
+      font-weight: 800;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dot.active {
+      background: var(--crimson);
+      color: var(--gold-bright);
+      transform: scale(1.12);
+    }
+
+    /* All-8-Pages Grid Modal / Printable View */
+    .all-pages-view {
+      width: 100%;
+      max-width: 1080px;
+      display: none;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 18px;
+      margin-top: 16px;
+    }
+    .all-pages-view.open {
+      display: grid;
+    }
+    .mini-page {
+      background: var(--parchment);
+      border: 3px solid var(--crimson);
+      border-radius: 12px;
+      overflow: hidden;
+      padding: 10px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .mini-page img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid var(--crimson);
+    }
+    .mini-page h4 {
+      margin: 8px 0 4px;
+      color: var(--crimson);
+      font-size: 1rem;
+    }
+    .mini-page p {
+      margin: 0;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .top-bar, .book-stage { display: none !important; }
+      .all-pages-view { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top-bar">
+    <div class="brand">
+      <span class="seal">连环画</span>
+      <div>
+        <div class="brand-title">Smiling Critters: Havoc in Heaven (微笑萌兽大闹天宫)</div>
+        <div class="brand-sub">Starring CatNap 🌙 • SunnyFox 🦊🏮 • LunaBat 🦇🌙 • Made with ❤️ from Mom in SF to Daughter in Boston</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn secondary" id="toggle-pinyin-btn" onclick="togglePinyin()">拼 Show Pinyin</button>
+      <button class="btn secondary" id="toggle-grid-btn" onclick="toggleAllPages()">📖 All 8 Pages</button>
+      <button class="btn" onclick="window.print()">🖨️ Print Booklet</button>
+    </div>
+  </header>
+
+  <main class="book-stage" id="book-stage">
+    <div class="art-frame" id="art-frame">
+      <img id="panel-img" src="panels/panel_01.jpg" alt="Lianhuanhua Panel" />
+      <canvas id="fx-canvas"></canvas>
+      <div class="tap-hint">✨ Tap or drag on the picture for magic sparkles!</div>
+    </div>
+
+    <div class="story-pane">
+      <div>
+        <div class="chapter-badge-row">
+          <span class="chapter-pill" id="chapter-pill">第一回 • Chapter 1 of 8</span>
+          <div class="cast-badges" id="cast-badges"></div>
+        </div>
+        <h2 class="chapter-title-zh" id="title-zh"></h2>
+        <h3 class="chapter-title-en" id="title-en"></h3>
+
+        <div class="story-box">
+          <p class="story-zh" id="story-zh"></p>
+          <p class="story-pinyin" id="story-pinyin"></p>
+          <p class="story-en" id="story-en"></p>
+        </div>
+
+        <div class="interactive-card">
+          <div class="interactive-header">
+            <span id="toy-prompt">✨ Interactive Chapter Magic</span>
+            <span id="toy-counter" style="color:#be185d;"></span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn magic" id="magic-action-btn" onclick="triggerChapterMagic()">⚡ Cast Magic!</button>
+            <input type="range" id="staff-slider" min="50" max="180" value="100" style="display:none;flex:1;" oninput="onStaffResize(this.value)" />
+          </div>
+        </div>
+
+        <div class="audio-row">
+          <button class="btn" onclick="speakStory('en-US')">🔊 Read in English</button>
+          <button class="btn" onclick="speakStory('zh-CN')">🔊 朗读中文唱词</button>
+          <button class="btn secondary" onclick="stopSpeech()">⏹️ Stop Audio</button>
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn" id="prev-btn" onclick="changePage(-1)">⬅️ Prev Page</button>
+        <div class="page-dots" id="page-dots"></div>
+        <button class="btn" id="next-btn" onclick="changePage(1)">Next Page ➡️</button>
+      </div>
+    </div>
+  </main>
+
+  <section class="all-pages-view" id="all-pages-view"></section>
+
+  <script>
+    const CHAPTERS = [
+      {
+        num: 1,
+        numZh: "第一回",
+        image: "panels/panel_01.jpg",
+        titleZh: "花果山仙石孕紫月 · 水帘洞群萌拜大圣",
+        titleEn: "Birth of the Starlight Critter King on Flower-Fruit Mountain",
+        cast: ["CatNap 🌙", "SunnyFox 🦊🏮", "LunaBat 🦇🌙"],
+        storyZh: "东胜神洲傲来国有一座花果山，山顶一块紫月仙石吸日月精华，轰然迸裂！紫月喵王 CatNap 身披金甲跃出仙石，身旁的金灯小狐 SunnyFox 点亮温暖提灯，星月小蝠 LunaBat 振翅欢呼，众萌兽齐拜“美猴王”！",
+        pinyin: "Dōngshèng Shénzhōu Àoláiguó yǒu yī zuò Huāguǒshān, shāndǐng yī kuài Zǐyuè xiānshí xī rìyuè jīnghuá, hōngrán bèngliè! Zǐyuè Miāowáng CatNap shēnpī jīnjiǎ yuèchū xiānshí, SunnyFox diǎnliàng wēnnuǎn tídēng, LunaBat zhènchì huānhū!",
+        storyEn: "Atop magical Flower-Fruit Mountain beside the sparkling Water-Curtain Cave waterfall, a glowing lavender moon-stone absorbed the light of the sun and stars—and burst open! Out leaped CatNap as the Starlight Monkey King, while SunnyFox lit her golden chest lantern and LunaBat flapped her quilted lavender wings in celebration!",
+        magicBtn: "💎 Tap to Crack the Glowing Moon-Stone!",
+        effectType: "starburst"
+      },
+      {
+        num: 2,
+        numZh: "第二回",
+        image: "panels/panel_02.jpg",
+        titleZh: "探龙宫喜得金箍棒 · 宝灯照亮水晶宫",
+        titleEn: "The Magical Golden Staff of the Eastern Sea Dragon Palace",
+        cast: ["CatNap 🌙", "Bubba Bubbaphant 🐘👑", "SunnyFox 🦊🏮", "LunaBat 🦇🌙"],
+        storyZh: "为寻一件称手兵器，CatNap 与 SunnyFox、LunaBat 潜入东海水晶宫。SunnyFox 胸前的黄金风暴灯照亮深海，龙王 Bubba 献出定海神珍铁——“如意金箍棒”！金棒随心变大变小，放出万道金光！",
+        pinyin: "Wèi xún yī jiàn chènshǒu bīngqì, CatNap yǔ SunnyFox, LunaBat qiánrù Dōnghǎi Shuǐjīnggōng. SunnyFox xiōngqián de huángjīn fēngbàodēng zhàoliàng shēnhǎi, Lóngwáng Bubba xiànchū Rúyì Jīngūbàng!",
+        storyEn: "Seeking a legendary weapon, CatNap dove into the underwater Crystal Palace with SunnyFox and LunaBat. SunnyFox's golden lantern illuminated the deep sea as Dragon King Bubba Bubbaphant marveled: the colossal Ruyi Golden Staff shrank and grew at CatNap's command, swirling with golden waves!",
+        magicBtn: "🪄 Grow & Spin the Ruyi Golden Staff!",
+        effectType: "golden_swirl",
+        hasStaffSlider: true
+      },
+      {
+        num: 3,
+        numZh: "第三回",
+        image: "panels/panel_03.jpg",
+        titleZh: "掌蟠桃仙园尝仙果 · 众好友同享瑶池甜",
+        titleEn: "The Great Immortal Peach Orchard Feast",
+        cast: ["CatNap 🌙", "SunnyFox 🦊🏮", "LunaBat 🦇🌙", "PickyPiggy 🐷", "Bobby BearHug 🐻"],
+        storyZh: "CatNap 头戴凤翅紫金冠，受封掌管天宫蟠桃园。枝头三千年一熟的仙桃芬芳扑鼻，CatNap 招呼 SunnyFox、LunaBat 与仙官 PickyPiggy、Bobby BearHug 一起品尝香甜仙桃，天宫笑声朗朗！",
+        pinyin: "CatNap tóudài fèngchì zǐjīnguān, shòufēng zhǎngguǎn Tiāngōng Pántáoyuán. Zhītóu sānqiānnián yī shú de xiāntáo fēnfāng pūbí, CatNap zhāohū SunnyFox, LunaBat yǔ PickyPiggy, Bobby BearHug yīqǐ pǐncháng!",
+        storyEn: "Wearing his gleaming Phoenix-Feather Golden Crown, CatNap was appointed guardian of the Celestial Immortal Peach Orchard! Instead of keeping the three-thousand-year glowing peaches to himself, he invited SunnyFox, LunaBat, PickyPiggy, and Bobby BearHug for the sweetest sky-picnic in heaven!",
+        magicBtn: "🍑 Pick & Toss Glowing Immortal Peaches!",
+        effectType: "peaches"
+      },
+      {
+        num: 4,
+        numZh: "第四回",
+        image: "panels/panel_04.jpg",
+        titleZh: "兜率宫巧取星光糖 · 紫雾筋斗云游九霄",
+        titleEn: "The Golden Gourd of Starlight Candies & Somersault Cloud",
+        cast: ["CatNap 🌙", "SunnyFox 🦊🏮", "LunaBat 🦇🌙"],
+        storyZh: "离开蟠桃园后，三好友误入兜率宫，发现装满七彩星光仙糖的紫金葫芦！CatNap 跃上紫雾筋斗云，一个筋斗十万八千里，把璀璨仙糖洒向漫天云霞，与 SunnyFox、LunaBat 踏云欢歌！",
+        pinyin: "Líkāi Pántáoyuán hòu, sān hǎoyǒu wùrù Dōushuàigōng, fāxiàn zhuāngmǎn qīcǎi xīngguāng xiāntáng de zǐjīn húlú! CatNap yuèshàng zǐwù Jīndǒuyún, bǎ cuǐcàn xiāntáng sǎxiàng màntiān yúnxiá!",
+        storyEn: "Wandering into the grand Tushita Palace among the clouds, the trio discovered a shining Golden Gourd overflowing with rainbow starlight candies! Hopping onto his purple Somersault Cloud—capable of flying 108,000 miles in a single flip—CatNap, SunnyFox, and LunaBat showered the sky with candy stars!",
+        magicBtn: "☁️ Ride the Somersault Cloud & Shower Candy Stars!",
+        effectType: "candies"
+      },
+      {
+        num: 5,
+        numZh: "第五回",
+        image: "panels/panel_05.jpg",
+        titleZh: "竖大旗号称齐天圣 · 云端比武会众神将",
+        titleEn: "The Great Sage Sky Tournament Above Flower-Fruit Mountain",
+        cast: ["CatNap 🌙", "DogDay 🐶☀️", "KickinChicken 🐔🔥", "Hoppy Hopscotch 🐰", "SunnyFox 🦊", "LunaBat 🦇"],
+        storyZh: "花果山高竖“齐天大圣”红旗！天宫派出神将 DogDay、脚踏风火轮的 KickinChicken 与双锏将 Hoppy Hopscotch 前来云端大比武。CatNap 横举金箍棒见招拆招，SunnyFox 与 LunaBat 在祥云上呐喊助威！",
+        pinyin: "Huāguǒshān gāoshù 'Qítiān Dàshèng' hóngqí! Tiāngōng pàichū shénjiàng DogDay, jiǎotà fēnghuǒlún de KickinChicken yǔ Hoppy Hopscotch qiánlái yúnduān dàbǐwǔ!",
+        storyEn: "Under the crimson banner of 'Great Sage Equal to Heaven,' CatNap hosted a thrilling martial-arts sky tournament! Celestial General DogDay, KickinChicken riding blazing Wind-Fire Wheels, and Hoppy Hopscotch sparred playfully in the clouds while SunnyFox and LunaBat cheered from a golden cloud!",
+        magicBtn: "⚔️ Clash Golden Staff & Wind-Fire Sparks!",
+        effectType: "sparks"
+      },
+      {
+        num: 6,
+        numZh: "第六回",
+        image: "panels/panel_06.jpg",
+        titleZh: "八卦炉金灯护良朋 · 炼就火眼金睛破炉出",
+        titleEn: "SunnyFox's Lantern & LunaBat's Moon Shield in the Eight-Trigrams Furnace",
+        cast: ["CatNap 🌙✨", "SunnyFox 🦊🏮", "LunaBat 🦇🌙"],
+        storyZh: "在太上老君的八卦炉中，SunnyFox 点亮胸前的黄金提灯，LunaBat 绽放星月徽章光芒，化作一道温暖金光护罩！炉火非但没有伤到他们，反而助 CatNap 炼成闪耀的“火眼金睛”，三友齐心一跃破炉而出！",
+        pinyin: "Zài Bāguàlú zhōng, SunnyFox diǎnliàng huángjīn tídēng, LunaBat zhànfàng xīngyuè huīzhāng guāngmáng, huàzuò jīnguāng hùzhào! Zhù CatNap liànchéng 'Huǒyǎn Jīnjīng', sān yǒu qíxīn pòlú ér chū!",
+        storyEn: "Inside the bronze Eight-Trigrams Furnace, SunnyFox beamed her golden storm lantern and LunaBat radiated her crescent moon-star pendant to weave a warm starlight shield! Instead of being harmed, CatNap emerged with dazzling Golden Starlight Eyes (Huo Yan Jin Jing) as the trio leaped triumphantly into the sky!",
+        magicBtn: "🔥 Ignite Golden Starlight Eyes & Lantern Shield!",
+        effectType: "golden_eyes"
+      },
+      {
+        num: 7,
+        numZh: "第七回",
+        image: "panels/panel_07.jpg",
+        titleZh: "拔毫毛变出百萌喵 · 凌霄殿前绘彩虹桥",
+        titleEn: "Magic Fur Clones & Rainbow Bridge at the Southern Heaven Gate",
+        cast: ["CatNap 🌙", "SunnyFox 🦊🏮", "LunaBat 🦇🌙", "CraftyCorn 🦄🌈"],
+        storyZh: "南天门外、凌霄殿前，CatNap 拔下一撮紫绒毛轻轻一吹，瞬间化作十几个长着小翅膀的迷你 CatNap 驾云飞舞！独角兽 CraftyCorn 挥动仙笔绘出七彩虹桥，SunnyFox 与 LunaBat 笑看漫天星雨！",
+        pinyin: "Nántiānmén wài, Língxiāodiàn qián, CatNap báxià yī cuō zǐ róngmáo qīngqīng yī chuī, huàzuò shíjǐ gè mínǐ CatNap jiàyún fēiwǔ! CraftyCorn huīdòng xiānbǐ huìchū qīcǎi hóngqiáo!",
+        storyEn: "At the towering red gates of the Southern Heaven Portal, CatNap plucked a tuft of purple plush fur and blew a magical breath—transforming it into a joyful squadron of tiny winged mini-CatNaps! CraftyCorn painted a shimmering rainbow across the marble pillars as SunnyFox and LunaBat danced in the starlight!",
+        magicBtn: "💨 Blow Magic Breath to Summon Mini-CatNaps!",
+        effectType: "clones"
+      },
+      {
+        num: 8,
+        numZh: "第八回",
+        image: "panels/panel_08.jpg",
+        titleZh: "金门大桥连波士顿 · 四海一家蟠桃大团圆",
+        titleEn: "Grand Finale: The Golden Cloud Bridge from San Francisco to Boston",
+        cast: ["All 10 Critters 🌟", "San Francisco 🌉", "Boston 🏛️"],
+        storyZh: "大闹天宫化作一场盛大的云端团圆庆典！金色祥云架起一座横跨三千英里的仙桥——左边是妈妈所在的旧金山金门大桥，右边是女儿所在的波士顿天际线！CatNap、SunnyFox、LunaBat 与所有伙伴手捧仙桃与彩灯，把满满的爱送到波士顿！",
+        pinyin: "Dànào Tiāngōng huàzuò yī chǎng shèngdà de yúnduān tuányuán qìngdiǎn! Jīnsè xiángyún jiàqǐ yī zuò héngkuà sānqiān yīnglǐ de xiānqiáo—zuǒbiān shì Jiùjīnshān Jīnmén Dàqiáo, yòubiān shì Bōshìdùn!",
+        storyEn: "The celestial adventure blossomed into the Grand Peach & Lantern Peace Festival! Golden clouds formed a magical bridge spanning 3,000 miles—connecting Mom by San Francisco's Golden Gate Bridge on the left to Daughter by Boston's skyline on the right, as CatNap, SunnyFox, LunaBat, and all their friends celebrated together!",
+        magicBtn: "🏮 Launch SF ↔ Boston Celebration Lanterns!",
+        effectType: "lanterns"
+      }
+    ];
+
+    let currentIdx = 0;
+    let showPinyin = false;
+    let magicCounts = new Array(CHAPTERS.length).fill(0);
+    let particles = [];
+
+    const canvas = document.getElementById("fx-canvas");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width || 640;
+      canvas.height = rect.height || 480;
+    }
+    window.addEventListener("resize", resizeCanvas);
+
+    // Web Audio Pentatonic Chime Synthesizer
+    let audioCtx = null;
+    function playChime(notes = [523.25, 587.33, 659.25, 783.99, 1046.5]) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.09);
+          gain.gain.setValueAtTime(0.14, audioCtx.currentTime + i * 0.09);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.09 + 0.55);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + i * 0.09);
+          osc.stop(audioCtx.currentTime + i * 0.09 + 0.56);
+        });
+      } catch (e) {}
+    }
+
+    function spawnParticles(x, y, type, count = 24) {
+      const emojis = {
+        starburst: ["✨", "🌟", "🌙", "⚡"],
+        golden_swirl: ["🪄", "✨", "💛", "🌊"],
+        peaches: ["🍑", "🌸", "✨", "💖"],
+        candies: ["🍬", "🍭", "🌟", "☁️"],
+        sparks: ["⚡", "🔥", "✨", "🌟"],
+        golden_eyes: ["🔥", "🏮", "🌙", "✨"],
+        clones: ["🐱", "💜", "🌈", "☁️"],
+        lanterns: ["🏮", "🌉", "💖", "🍑"]
+      }[type] || ["✨", "🌟"];
+
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+        const speed = 1.5 + Math.random() * 4.5;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1.2,
+          size: 18 + Math.random() * 14,
+          alpha: 1,
+          emoji: emojis[i % emojis.length]
+        });
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.05;
+        p.alpha -= 0.016;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.font = `${Math.round(p.size)}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.fillText(p.emoji, p.x, p.y);
+        ctx.restore();
+      }
+      requestAnimationFrame(animateParticles);
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const ch = CHAPTERS[currentIdx];
+      spawnParticles(e.clientX - rect.left, e.clientY - rect.top, ch.effectType, 18);
+      playChime([659.25, 783.99, 1046.5]);
+    });
+
+    function triggerChapterMagic() {
+      resizeCanvas();
+      const ch = CHAPTERS[currentIdx];
+      magicCounts[currentIdx]++;
+      document.getElementById("toy-counter").textContent = `Magic Cast: ${magicCounts[currentIdx]}× ✨`;
+      spawnParticles(canvas.width * 0.5, canvas.height * 0.5, ch.effectType, 32);
+      playChime([523.25, 659.25, 783.99, 1046.5, 1318.5]);
+    }
+
+    function onStaffResize(val) {
+      const img = document.getElementById("panel-img");
+      const scale = val / 100;
+      img.style.transform = `scale(${scale})`;
+      spawnParticles(canvas.width * 0.5, canvas.height * 0.5, "golden_swirl", 6);
+    }
+
+    function renderPage() {
+      stopSpeech();
+      const ch = CHAPTERS[currentIdx];
+      const img = document.getElementById("panel-img");
+      img.style.transform = "scale(1)";
+      img.src = ch.image;
+      document.getElementById("chapter-pill").textContent = `${ch.numZh} • Chapter ${ch.num} of ${CHAPTERS.length}`;
+      document.getElementById("title-zh").textContent = ch.titleZh;
+      document.getElementById("title-en").textContent = ch.titleEn;
+      document.getElementById("story-zh").textContent = ch.storyZh;
+      document.getElementById("story-pinyin").textContent = ch.pinyin;
+      document.getElementById("story-en").textContent = ch.storyEn;
+      document.getElementById("magic-action-btn").textContent = ch.magicBtn;
+      document.getElementById("toy-counter").textContent = magicCounts[currentIdx] ? `Magic Cast: ${magicCounts[currentIdx]}× ✨` : "";
+
+      const slider = document.getElementById("staff-slider");
+      slider.style.display = ch.hasStaffSlider ? "block" : "none";
+      slider.value = 100;
+
+      const castContainer = document.getElementById("cast-badges");
+      castContainer.innerHTML = "";
+      ch.cast.forEach(c => {
+        const span = document.createElement("span");
+        span.className = "cast-tag";
+        span.textContent = c;
+        castContainer.appendChild(span);
+      });
+
+      const dots = document.getElementById("page-dots");
+      dots.innerHTML = "";
+      CHAPTERS.forEach((item, idx) => {
+        const d = document.createElement("button");
+        d.className = "dot" + (idx === currentIdx ? " active" : "");
+        d.textContent = item.num;
+        d.onclick = () => {
+          currentIdx = idx;
+          playChime([587.33, 880]);
+          renderPage();
+        };
+        dots.appendChild(d);
+      });
+
+      document.getElementById("prev-btn").disabled = currentIdx === 0;
+      document.getElementById("next-btn").disabled = currentIdx === CHAPTERS.length - 1;
+      setTimeout(resizeCanvas, 50);
+    }
+
+    function changePage(delta) {
+      const next = currentIdx + delta;
+      if (next < 0 || next >= CHAPTERS.length) return;
+      currentIdx = next;
+      playChime([523.25, 659.25, 783.99]);
+      renderPage();
+    }
+
+    function togglePinyin() {
+      showPinyin = !showPinyin;
+      document.getElementById("story-pinyin").classList.toggle("visible", showPinyin);
+      document.getElementById("toggle-pinyin-btn").textContent = showPinyin ? "拼 Hide Pinyin" : "拼 Show Pinyin";
+    }
+
+    function toggleAllPages() {
+      const grid = document.getElementById("all-pages-view");
+      const open = grid.classList.toggle("open");
+      document.getElementById("toggle-grid-btn").textContent = open ? "📕 Single Page View" : "📖 All 8 Pages";
+      if (open) grid.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function speakStory(lang) {
+      if (!("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const ch = CHAPTERS[currentIdx];
+      const text = lang.startsWith("zh") ? `${ch.numZh}，${ch.titleZh}。${ch.storyZh}` : `Chapter ${ch.num}: ${ch.titleEn}. ${ch.storyEn}`;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = lang;
+      utter.rate = 0.95;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function stopSpeech() {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    }
+
+    // Build All-8-Pages Grid
+    const allGrid = document.getElementById("all-pages-view");
+    CHAPTERS.forEach((ch, idx) => {
+      const card = document.createElement("div");
+      card.className = "mini-page";
+      card.innerHTML = `
+        <img src="${ch.image}" alt="${ch.titleEn}" />
+        <h4>${ch.numZh} • ${ch.titleZh}</h4>
+        <p style="font-weight:700;margin-bottom:4px;">${ch.titleEn}</p>
+        <p>${ch.storyZh}</p>
+        <p style="margin-top:6px;color:#4b5563;">${ch.storyEn}</p>
+      `;
+      card.onclick = () => {
+        currentIdx = idx;
+        renderPage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+      allGrid.appendChild(card);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") changePage(1);
+      if (e.key === "ArrowLeft") changePage(-1);
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+    }
+
+    renderPage();
+    resizeCanvas();
+    requestAnimationFrame(animateParticles);
+  </script>
+</body>
+</html>

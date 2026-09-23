@@ -1,0 +1,17 @@
+{
+  "name": "Smiling Critters: Havoc in Heaven (微笑萌兽大闹天宫 · 连环画)",
+  "short_name": "Critters 连环画",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#240707",
+  "theme_color": "#8b1e1e",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "panels/panel_01.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
